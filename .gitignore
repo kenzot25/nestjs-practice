@@ -330,13 +330,6 @@ paket-files/
 .idea/
 *.sln.iml
 
-# IDE - VSCode
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
 # CodeRush
 .cr/
 
@@ -394,7 +387,9 @@ Temporary Items
 
 =======
 # Local
+docker.env
 .env
+rabbitmq.env
 dist
-.webpack
-.serverless/**/*.zip
+
+uploadedFiles
