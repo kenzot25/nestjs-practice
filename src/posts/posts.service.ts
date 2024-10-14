@@ -2,47 +2,53 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { Post } from './posts.interface';
 import { UpdatePostDto } from './dto/updatePost.dto';
 import { CreatePostDto } from './dto/createPost.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import PostEntity from './post.entity';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export default class PostsService {
   private lastPostId = 0;
   private posts: Post[] = [];
 
+  constructor(
+    @InjectRepository(PostEntity)
+    private readonly postsRepository: Repository<PostEntity>,
+  ) {}
+
   getAllPosts() {
-    return this.posts;
+    return this.postsRepository.find();
   }
 
-  getPostById(id: number) {
-    const post = this.posts.find((post) => post.id === id);
-    if (post) {
-      return post;
-    }
+  async getPostById(id: number) {
+    const post = await this.postsRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (post) return post;
     throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
   }
 
-  replacePost(id: number, post: UpdatePostDto) {
-    const postIndex = this.posts.findIndex((post) => post.id === id);
-    if (postIndex > -1) {
-      this.posts[postIndex] = post;
-      return post;
-    }
+  async updatePost(id: number, post: UpdatePostDto) {
+    await this.postsRepository.update(id, post);
+    const updatedPost = await this.postsRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (updatedPost) return updatedPost;
     throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
   }
 
-  createPost(post: CreatePostDto) {
-    const newPost = {
-      id: ++this.lastPostId,
-      ...post,
-    };
-    this.posts.push(newPost);
+  async createPost(post: CreatePostDto) {
+    const newPost = await this.postsRepository.save(post);
     return newPost;
   }
 
-  deletePost(id: number) {
-    const postIndex = this.posts.findIndex((post) => post.id === id);
-    if (postIndex > -1) {
-      this.posts.splice(postIndex, 1);
-    } else {
+  async deletePost(id: number) {
+    const result = await this.postsRepository.delete(id);
+    if (!result.affected) {
       throw new HttpException('Post not found', HttpStatus.NOT_FOUND);
     }
   }
