@@ -17,7 +17,6 @@ export default class PostsController {
 
   @Get()
   getAllPosts() {
-    console.log('getAllPosts');
     return this.postsService.getAllPosts();
   }
 
