@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { PostsModule } from './posts/posts.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { DatabaseModule } from './database/database.module';
-import { UserService } from './user/user.service';
-import { UserModule } from './user/user.module';
-import { AuthenticationController } from './authentication/authentication.controller';
-import { AuthenticationModule } from './authentication/authentication.module';
+import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import * as Joi from 'joi';
-import { JwtModule } from '@nestjs/jwt';
+import { AuthenticationModule } from './authentication/authentication.module';
+import { DatabaseModule } from './database/database.module';
+import { PostsModule } from './posts/posts.module';
+import { UserModule } from './user/user.module';
+import { ExceptionLoggerFilter } from './utils/exceptions/exceptionLogger.filter';
 
 @Module({
   imports: [
