@@ -1,22 +1,27 @@
 import {
   Body,
+  ClassSerializerInterceptor,
   Controller,
   Get,
   HttpCode,
   Post,
   Req,
   Res,
+  SerializeOptions,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthenticationService } from './authentication.service';
 import RegisterDto from './dto/register.dto';
+import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/local.guard';
 import RequestWithUser from './interfaces/requestWithUser.interface';
-import { JwtGuard } from './guards/jwt.guard';
-import User from 'src/user/user.entity';
 
 @Controller('authentication')
+@SerializeOptions({
+  strategy: 'excludeAll',
+})
 export class AuthenticationController {
   constructor(private readonly authService: AuthenticationService) {}
 
@@ -24,7 +29,6 @@ export class AuthenticationController {
   @UseGuards(JwtGuard)
   authentication(@Req() req: RequestWithUser) {
     const user = req.user;
-    delete user.password;
     return user;
   }
 
