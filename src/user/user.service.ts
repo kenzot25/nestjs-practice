@@ -24,7 +24,18 @@ export class UserService {
       HttpStatus.NOT_FOUND,
     );
   }
-
+  async getById(id: number) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+    if (user) return user;
+    throw new HttpException(
+      'User with id does not exits',
+      HttpStatus.NOT_ACCEPTABLE,
+    );
+  }
   async createUser(userData: CreateUserDto) {
     const newUser = await this.userRepository.create(userData);
     await this.userRepository.save(newUser);
