@@ -19,31 +19,32 @@ import { LocalGuard } from './guards/local.guard';
 import RequestWithUser from './interfaces/requestWithUser.interface';
 
 @Controller('authentication')
+@UseInterceptors(ClassSerializerInterceptor)
 @SerializeOptions({
-  strategy: 'excludeAll',
+  strategy: 'exposeAll',
 })
 export class AuthenticationController {
   constructor(private readonly authService: AuthenticationService) {}
 
-  @Get()
   @UseGuards(JwtGuard)
+  @Get()
   authentication(@Req() req: RequestWithUser) {
     const user = req.user;
     return user;
   }
 
   @Post('register')
-  register(@Body() userData: RegisterDto) {
+  async register(@Body() userData: RegisterDto) {
     return this.authService.register(userData);
   }
 
   @HttpCode(200)
-  @Post('login')
   @UseGuards(LocalGuard)
+  @Post('login')
   login(
     // @Body() user: LoginDto
     @Req() request: RequestWithUser, //local guard will passing user object into req
-    @Res() response: Response,
+    @Res({ passthrough: true }) response: Response, // if not set passthrough true, we will need to handle res our self and it'll throw serialize err
   ) {
     // return this.authService.getAuthenticatedUser(req.email, req.password);
     // rather call authService in here, we use guard instead and it'll do it for us
@@ -51,8 +52,8 @@ export class AuthenticationController {
     return this.authService.login(user, response);
   }
 
-  @Post('logout')
   @UseGuards(JwtGuard)
+  @Post('logout')
   logout(
     @Req() request: RequestWithUser, //local guard will passing user object into req
     @Res() res: Response,

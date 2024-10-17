@@ -6,6 +6,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import PostEntity from './post.entity';
 import { Repository } from 'typeorm';
 import { PostNotFoundException } from './exceptions/postNotFound.exception';
+import RequestWithUser from 'src/authentication/interfaces/requestWithUser.interface';
+import User from 'src/user/entities/user.entity';
 
 @Injectable()
 export default class PostsService {
@@ -18,7 +20,9 @@ export default class PostsService {
   ) {}
 
   getAllPosts() {
-    return this.postsRepository.find();
+    return this.postsRepository.find({
+      relations: ['author', 'categories'],
+    });
   }
 
   async getPostById(id: number) {
@@ -26,6 +30,7 @@ export default class PostsService {
       where: {
         id,
       },
+      relations: ['author'],
     });
     if (post) return post;
     throw new PostNotFoundException(id);
@@ -37,13 +42,14 @@ export default class PostsService {
       where: {
         id,
       },
+      relations: ['author'],
     });
     if (updatedPost) return updatedPost;
     throw new PostNotFoundException(id);
   }
 
-  async createPost(post: CreatePostDto) {
-    const newPost = await this.postsRepository.save(post);
+  async createPost(post: CreatePostDto, user: User) {
+    const newPost = await this.postsRepository.save({ ...post, author: user });
     return newPost;
   }
 

@@ -1,12 +1,12 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { UserService } from 'src/user/user.service';
-import RegisterDto from './dto/register.dto';
-import * as bcrypt from 'bcrypt';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import User from 'src/user/user.entity';
+import * as bcrypt from 'bcrypt';
 import { Response } from 'express';
 import ms from 'ms';
-import { ConfigService } from '@nestjs/config';
+import User from 'src/user/entities/user.entity';
+import { UserService } from 'src/user/user.service';
+import RegisterDto from './dto/register.dto';
 
 @Injectable()
 export class AuthenticationService {
@@ -23,7 +23,6 @@ export class AuthenticationService {
         ...registerData,
         password: hashedPassword,
       });
-      delete createdUser.password;
       return createdUser;
     } catch (err) {
       if (err?.code == PostgresErrorCode.UniqueViolation) {
@@ -43,7 +42,6 @@ export class AuthenticationService {
     try {
       const user = await this.userService.getByEmail(email);
       await this.verifyPassword(plainTextPassword, user.password);
-      delete user.password;
       return user;
     } catch (err) {
       throw new HttpException('Wrong credentials', HttpStatus.BAD_REQUEST);
@@ -73,7 +71,7 @@ export class AuthenticationService {
       httpOnly: true,
       expires: expires,
     });
-    return res.send(user);
+    return user;
   }
 
   public async logout(res: Response) {

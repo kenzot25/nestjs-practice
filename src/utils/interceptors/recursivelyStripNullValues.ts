@@ -1,19 +1,28 @@
-export default function recursivelyStripNullValues(value: unknown): unknown {
+export default function recursivelyStripNullValues(
+  value: unknown,
+  seen = new WeakSet(),
+): unknown {
   if (Array.isArray(value)) {
-    // If value is array -> Check null value for every property in array
-    return value.map(recursivelyStripNullValues);
+    // If value is an array -> Check for null value for every property in the array
+    return value.map((item) => recursivelyStripNullValues(item, seen));
   }
+
   if (value !== null && typeof value === 'object') {
-    // return Object that cleared all null value key pair
+    if (seen.has(value)) {
+      // Avoid infinite recursion due to cyclic reference
+      return value;
+    }
+
+    seen.add(value);
+
+    // Return object that cleared all null value key pairs
     return Object.fromEntries(
-      // Convert object to array then check if its null then stripping all null value
-      Object.entries(value).map(([key, value]) => [
-        key,
-        recursivelyStripNullValues(value),
-      ]),
+      // Convert object to an array, then check if its value is null and strip all null values
+      Object.entries(value)
+        .filter(([_, val]) => val !== null) // Filter out null values directly here
+        .map(([key, val]) => [key, recursivelyStripNullValues(val, seen)]),
     );
   }
-  if (value !== null) {
-    return value;
-  }
+
+  return value !== null ? value : undefined;
 }
