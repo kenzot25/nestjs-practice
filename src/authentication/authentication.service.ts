@@ -7,6 +7,7 @@ import ms from 'ms';
 import User from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import RegisterDto from './dto/register.dto';
+import { PostgresErrorCode } from 'src/database/postgresErrorCodes.enum';
 
 @Injectable()
 export class AuthenticationService {

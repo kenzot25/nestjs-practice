@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 import Address from './address.entity';
 import Post from 'src/posts/post.entity';
+import PublicFile from 'src/files/publicFiles.entity';
 
 @Entity('user')
 export default class User {
@@ -34,4 +35,11 @@ export default class User {
 
   @OneToMany(() => Post, (post: Post) => post.author)
   public posts: Post[];
+
+  @OneToOne(() => PublicFile, (file) => file.user, {
+    eager: true,
+    nullable: true,
+  })
+  @JoinColumn()
+  public avatar?: PublicFile;
 }

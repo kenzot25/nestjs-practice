@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
 import * as Joi from 'joi';
 import { AuthenticationModule } from './authentication/authentication.module';
+import { CategoriesModule } from './categories/categories.module';
 import { DatabaseModule } from './database/database.module';
 import { PostsModule } from './posts/posts.module';
 import { UserModule } from './user/user.module';
-import { ExceptionLoggerFilter } from './utils/exceptions/exceptionLogger.filter';
-import { CategoriesModule } from './categories/categories.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
   imports: [
@@ -22,12 +21,17 @@ import { CategoriesModule } from './categories/categories.module';
         PORT: Joi.number(),
         JWT_SECRET: Joi.string().required(),
         JWT_EXPIRATION_TIME: Joi.string().required(),
+        AWS_REGION: Joi.string().required(),
+        AWS_ACCESS_KEY_ID: Joi.string().required(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().required(),
+        AWS_PUBLIC_BUCKET_NAME: Joi.string().required(),
       }),
     }),
     DatabaseModule,
     UserModule,
     AuthenticationModule,
     CategoriesModule,
+    FilesModule,
   ],
   controllers: [],
   providers: [],

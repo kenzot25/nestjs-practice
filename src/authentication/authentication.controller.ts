@@ -43,7 +43,7 @@ export class AuthenticationController {
   @Post('login')
   login(
     // @Body() user: LoginDto
-    @Req() request: RequestWithUser, //local guard will passing user object into req
+    @Req() request: RequestWithUser, // taking user from request that return from validated function in local guard
     @Res({ passthrough: true }) response: Response, // if not set passthrough true, we will need to handle res our self and it'll throw serialize err
   ) {
     // return this.authService.getAuthenticatedUser(req.email, req.password);
@@ -55,7 +55,7 @@ export class AuthenticationController {
   @UseGuards(JwtGuard)
   @Post('logout')
   logout(
-    @Req() request: RequestWithUser, //local guard will passing user object into req
+    @Req() request: RequestWithUser,
     @Res() res: Response,
   ) {
     this.authService.logout(res);
