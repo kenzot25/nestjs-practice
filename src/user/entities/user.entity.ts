@@ -10,6 +10,7 @@ import {
 import Address from './address.entity';
 import Post from 'src/posts/post.entity';
 import PublicFile from 'src/files/publicFiles.entity';
+import PrivateFile from 'src/private-files/private-files.entity';
 
 @Entity('user')
 export default class User {
@@ -42,4 +43,7 @@ export default class User {
   })
   @JoinColumn()
   public avatar?: PublicFile;
+
+  @OneToMany(() => PrivateFile, (file) => file.owner)
+  public files: PrivateFile[];
 }

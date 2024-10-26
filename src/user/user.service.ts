@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import UserEntity from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -6,6 +12,7 @@ import User from './entities/user.entity';
 import CreateUserDto from './dto/createUser.dto';
 import PublicFile from 'src/files/publicFiles.entity';
 import { FilesService } from 'src/files/files.service';
+import { PrivateFilesService } from 'src/private-files/private-files.service';
 
 @Injectable()
 export class UserService {
@@ -13,6 +20,7 @@ export class UserService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly fileService: FilesService,
+    private readonly privateFileService: PrivateFilesService,
   ) {}
 
   async getByEmail(email: string) {
@@ -69,5 +77,40 @@ export class UserService {
       });
       await this.fileService.deletePublicFile(user.avatar?.id);
     }
+  }
+
+  async addPrivateFile(ownerId: number, file: Buffer, fileName: string) {
+    return this.privateFileService.uploadPrivateFile(ownerId, file, fileName);
+  }
+
+  async getPrivateFile(userId: number, fileId: number) {
+    const file = await this.privateFileService.getPrivateFile(fileId, userId);
+    if (file) {
+      return file;
+    }
+    throw new UnauthorizedException();
+  }
+
+  public async getAllPrivateFiles(userId: number) {
+    const userWithFiles = await this.userRepository.findOne({
+      where: {
+        id: userId,
+      },
+      relations: ['files'],
+    });
+    if (userWithFiles) {
+      return Promise.all(
+        userWithFiles.files.map(async (file) => {
+          const url = await this.privateFileService.generatePresignedUrl(
+            file.key,
+          );
+          return {
+            ...file,
+            url,
+          };
+        }),
+      );
+    }
+    throw new NotFoundException('User with id does not exist');
   }
 }
