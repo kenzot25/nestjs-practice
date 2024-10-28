@@ -8,6 +8,7 @@ import { PostsModule } from './posts/posts.module';
 import { UserModule } from './user/user.module';
 import { FilesModule } from './files/files.module';
 import { PrivateFilesModule } from './private-files/private-files.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { PrivateFilesModule } from './private-files/private-files.module';
     CategoriesModule,
     FilesModule,
     PrivateFilesModule,
+    SearchModule,
   ],
   providers: [],
 })
