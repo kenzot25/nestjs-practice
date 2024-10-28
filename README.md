@@ -31,10 +31,10 @@
 ## Installation
 
 ```bash
-$ npm install xyz
+$ npm install
 ```
 
-## Running the app abcd
+## Running the app
 
 ```bash
 # development
@@ -49,7 +49,7 @@ $ npm run start:prod
 
 ## Test
 
-<!-- ```bash
+```bash
 # unit tests
 $ npm run test
 
@@ -58,7 +58,7 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
-``` -->
+```
 
 
 ## Support

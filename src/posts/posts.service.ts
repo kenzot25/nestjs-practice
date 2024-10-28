@@ -1,22 +1,21 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { Post } from './posts.interface';
-import { UpdatePostDto } from './dto/updatePost.dto';
-import { CreatePostDto } from './dto/createPost.dto';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import PostEntity from './post.entity';
-import { Repository } from 'typeorm';
-import { PostNotFoundException } from './exceptions/postNotFound.exception';
-import RequestWithUser from 'src/authentication/interfaces/requestWithUser.interface';
 import User from 'src/user/entities/user.entity';
+import { In, Repository } from 'typeorm';
+import { CreatePostDto } from './dto/createPost.dto';
+import { UpdatePostDto } from './dto/updatePost.dto';
+import { PostNotFoundException } from './exceptions/postNotFound.exception';
+import PostEntity from './post.entity';
+import { Post } from './types/posts.interface';
+import PostsSearchService from './postsSearch.service';
+import { PostSearchBody, PostSearchResult } from './types/postSearch.interface';
 
 @Injectable()
 export default class PostsService {
-  private lastPostId = 0;
-  private posts: Post[] = [];
-
   constructor(
     @InjectRepository(PostEntity)
     private readonly postsRepository: Repository<PostEntity>,
+    private readonly postSearchService: PostsSearchService,
   ) {}
 
   getAllPosts() {
@@ -44,12 +43,16 @@ export default class PostsService {
       },
       relations: ['author'],
     });
-    if (updatedPost) return updatedPost;
+    if (updatedPost) {
+      await this.postSearchService.update(updatedPost);
+      return updatedPost;
+    }
     throw new PostNotFoundException(id);
   }
 
   async createPost(post: CreatePostDto, user: User) {
     const newPost = await this.postsRepository.save({ ...post, author: user });
+    this.postSearchService.indexPost(newPost);
     return newPost;
   }
 
@@ -58,5 +61,19 @@ export default class PostsService {
     if (!result.affected) {
       throw new PostNotFoundException(id);
     }
+    await this.postSearchService.remove(id);
+  }
+
+  async searchForPosts(text: string) {
+    const results = await this.postSearchService.search(text);
+    const ids = results.map((result: PostSearchBody) => result.id);
+    if (!ids.length) {
+      return [];
+    }
+    return this.postsRepository.find({
+      where: {
+        id: In(ids),
+      },
+    });
   }
 }
