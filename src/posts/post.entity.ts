@@ -3,6 +3,7 @@ import User from 'src/user/entities/user.entity';
 import {
   Column,
   Entity,
+  Index,
   JoinTable,
   ManyToMany,
   ManyToOne,
@@ -10,6 +11,7 @@ import {
 } from 'typeorm';
 
 @Entity('post')
+// @Index("post_authorId_columnId_index", ["id", "author.id"], { unique: true })
 export default class Post {
   @PrimaryGeneratedColumn()
   public id: number;
@@ -28,7 +30,8 @@ export default class Post {
   // //   }
   // // })
   // public category?: string;
-
+  
+  @Index('post_authorId_index')
   @ManyToOne(() => User, (author) => author.posts)
   public author: User;
 
