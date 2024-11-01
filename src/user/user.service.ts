@@ -13,7 +13,7 @@ import CreateUserDto from './dto/createUser.dto';
 import PublicFile from 'src/files/publicFiles.entity';
 import { FilesService } from 'src/files/files.service';
 import { PrivateFilesService } from 'src/private-files/private-files.service';
-
+import * as bcrypt from 'bcrypt';
 @Injectable()
 export class UserService {
   constructor(
@@ -112,5 +112,26 @@ export class UserService {
       );
     }
     throw new NotFoundException('User with id does not exist');
+  }
+
+  async setCurrentRefreshToken(refreshToken: string, userId: number) {
+    let currentHashedRefreshToken = null;
+    if (refreshToken) {
+      currentHashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    }
+    await this.userRepository.update(userId, {
+      currentHashedRefreshToken,
+    });
+  }
+
+  async getUserWhenRefreshTokenMatches(refreshToken: string, userId: number) {
+    const user = await this.getById(userId);
+    const isMatched = await bcrypt.compare(
+      refreshToken,
+      user.currentHashedRefreshToken,
+    );
+    if (isMatched) {
+      return user;
+    }
   }
 }

@@ -17,6 +17,7 @@ import RegisterDto from './dto/register.dto';
 import { JwtGuard } from './guards/jwt.guard';
 import { LocalGuard } from './guards/local.guard';
 import RequestWithUser from './interfaces/requestWithUser.interface';
+import { JwtRefreshTokenGuard } from './guards/jwt-refresh-token.guard';
 
 @Controller('authentication')
 @UseInterceptors(ClassSerializerInterceptor)
@@ -49,16 +50,28 @@ export class AuthenticationController {
     // return this.authService.getAuthenticatedUser(req.email, req.password);
     // rather call authService in here, we use guard instead and it'll do it for us
     const user = request.user;
-    return this.authService.login(user, response);
+    return this.authService.login(user, response, request);
   }
 
   @UseGuards(JwtGuard)
   @Post('logout')
-  logout(
-    @Req() request: RequestWithUser,
-    @Res() res: Response,
-  ) {
+  async logout(@Req() request: RequestWithUser, @Res() res: Response) {
+    await this.authService.removeRefreshToken(request.user.id);
     this.authService.logout(res);
     return res.sendStatus(200);
+  }
+
+  @UseGuards(JwtRefreshTokenGuard)
+  @Get('refresh')
+  refresh(
+    @Req() req: RequestWithUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const accessTokenCookie = this.authService.getCookieWithJwtAccessToken(
+      req.user.id,
+      res,
+    );
+    res.setHeader('Set-Cookie', accessTokenCookie);
+    return req.user;
   }
 }

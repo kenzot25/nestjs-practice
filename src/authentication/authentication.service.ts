@@ -8,6 +8,7 @@ import User from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import RegisterDto from './dto/register.dto';
 import { PostgresErrorCode } from 'src/database/postgresErrorCodes.enum';
+import RequestWithUser from './interfaces/requestWithUser.interface';
 
 @Injectable()
 export class AuthenticationService {
@@ -58,25 +59,58 @@ export class AuthenticationService {
     }
   }
 
-  public login(user: User, res: Response) {
-    const expires = new Date();
-    expires.setMilliseconds(
-      expires.getMilliseconds() +
-        ms(this.configService.getOrThrow<string>('JWT_EXPIRATION_TIME')),
-    );
-    const payload: TokenPayload = { userId: user.id };
-    const token = this.jwtService.sign(payload);
-    res.cookie('Authentication', token, {
-      // secure: true,
-      secure: false, // temporary set to false due to thunder client behavior
-      httpOnly: true,
-      expires: expires,
-    });
+  public async login(user: User, res: Response, request: RequestWithUser) {
+    const accessTokenCookie = this.getCookieWithJwtAccessToken(user.id, res);
+    const refreshTokenCookie = this.getCookieWithJwtRefreshToken(user.id, res);
+
+    await this.userService.setCurrentRefreshToken(refreshTokenCookie, user.id);
+
     return user;
   }
 
   public async logout(res: Response) {
     res.clearCookie('Authentication');
+    res.clearCookie('Refresh');
     return;
+  }
+
+  public getCookieWithJwtAccessToken(userId: number, res: Response) {
+    const payload: TokenPayload = { userId };
+    const token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_ACCESS_TOKEN_SECRET'),
+      expiresIn: `${this.configService.get('JWT_ACCESS_TOKEN_EXPIRATION_TIME')}`,
+    });
+    res.cookie('Authentication', token, {
+      secure: true,
+      httpOnly: true,
+      maxAge: ms(
+        this.configService.getOrThrow<string>(
+          'JWT_ACCESS_TOKEN_EXPIRATION_TIME',
+        ),
+      ),
+    });
+    return token;
+  }
+
+  public getCookieWithJwtRefreshToken(userId: number, res: Response) {
+    const payload: TokenPayload = { userId };
+    const token = this.jwtService.sign(payload, {
+      secret: this.configService.get('JWT_REFRESH_TOKEN_SECRET'),
+      expiresIn: `${this.configService.get('JWT_REFRESH_TOKEN_EXPIRATION_TIME')}`,
+    });
+    res.cookie('Refresh', token, {
+      secure: true,
+      httpOnly: true,
+      maxAge: ms(
+        this.configService.getOrThrow<string>(
+          'JWT_REFRESH_TOKEN_EXPIRATION_TIME',
+        ),
+      ),
+    });
+    return token;
+  }
+
+  async removeRefreshToken(userId: number) {
+    return this.userService.setCurrentRefreshToken(null, userId);
   }
 }

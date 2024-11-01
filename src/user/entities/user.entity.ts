@@ -27,6 +27,12 @@ export default class User {
   @Exclude()
   public password: string;
 
+  @Column({
+    nullable: true,
+  })
+  @Exclude()
+  public currentHashedRefreshToken?: string;
+
   @OneToOne(() => Address, {
     eager: true, // make the address always included
     cascade: true,
