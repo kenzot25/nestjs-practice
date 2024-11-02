@@ -2,7 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { S3 } from 'aws-sdk';
-import { Repository } from 'typeorm';
+import { QueryRunner, Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
 import PublicFile from './publicFiles.entity';
 
@@ -49,6 +49,28 @@ export class FilesService {
         .promise();
 
       await this.publicRepository.delete(file);
+    } catch (err) {
+      throw new HttpException(err.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  async deletePublicFileWithQueryRunner(fileId: number,queryRunner: QueryRunner) {
+    try {
+      const file = await this.publicRepository.findOne({
+        where: {
+          id: fileId,
+        },
+      });
+      const s3 = new S3();
+      const result = await s3
+        .deleteObject({
+          Bucket: this.configService.getOrThrow('AWS_PUBLIC_BUCKET_NAME'),
+          Key: file.key,
+        })
+        .promise();
+
+      // await this.publicRepository.delete(file);
+      await queryRunner.manager.delete(PublicFile, file.id)
     } catch (err) {
       throw new HttpException(err.message, HttpStatus.BAD_REQUEST);
     }
